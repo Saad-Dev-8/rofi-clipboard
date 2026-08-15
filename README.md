@@ -71,6 +71,7 @@ Add `rofi-clip` as a custom script mode in `~/.config/rofi/config.rasi`:
 
 ```rasi
 configuration {
+    display-clipboard: "  ";
     modi: "drun,run,window,clipboard:/home/yourusername/.local/bin/rofi-clip";
 }
 ```
