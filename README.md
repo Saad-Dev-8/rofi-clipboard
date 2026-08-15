@@ -4,6 +4,7 @@ A lightweight, minimal, and fast clipboard manager for Linux/X11 powered by `rof
 
 ## Features
 
+- **Rofi Custom Mode (`modi`):** Native integration directly into Rofi menus alongside `drun` and `window`.
 - **Image Support:** Captures screenshots/images copied to the clipboard and renders them inside Rofi using standard icon metadata.
 - **Deduplication:** Automatically bumps reused text and images to the top of your history instead of duplicating entries.
 - **Auto-Cleanup:** Includes a background daemon function that safely purges orphaned or unused image caches in real time.
@@ -18,14 +19,14 @@ Ensure the following dependencies are installed via your package manager:
 - `clipnotify` (to monitor clipboard events asynchronously)
 - `awk`, `sed`, `sha1sum` (standard POSIX tools)
 
-*Arch Linux example:*
+*Arch / Artix:*
 ```bash
-sudo pacman -S rofi xclip clipnotify
+sudo pacman -Syu rofi xclip clipnotify
 ```
 
-*Alpine / Gentoo / Artix (OpenRC) example:*
+*Gentoo:*
 ```bash
-sudo apk add rofi xclip clipnotify
+sudo emerge --ask x11-misc/rofi x11-misc/xclip x11-misc/clipnotify
 ```
 
 ## Installation
@@ -33,7 +34,7 @@ sudo apk add rofi xclip clipnotify
 Clone the repository and make the installation script executable:
 
 ```bash
-git clone [https://github.com/yourusername/rofi-clipboard.git](https://github.com/yourusername/rofi-clipboard.git)
+git clone https://github.com/Saad-Dev-8/rofi-clipboard.git
 cd rofi-clipboard
 chmod +x install.sh
 ```
@@ -64,11 +65,40 @@ sudo rc-update add clip-daemon default
 sudo rc-service clip-daemon start
 ```
 
-## Usage
+## Rofi Integration
 
-Bind a key combination in your window manager (e.g., `Mod + Shift + V` in dwm or i3) to run:
+Add `rofi-clip` as a custom script mode in `~/.config/rofi/config.rasi`:
+
+```rasi
+configuration {
+    modi: "drun,run,window,clipboard:/home/yourusername/.local/bin/rofi-clip";
+}
+```
+
+Now you can open the clipboard directly via command line:
 ```bash
-rofi-clip
+rofi -show clipboard
+```
+
+## Window Manager Configuration (dwm)
+
+To bind `Mod + Ctrl + W` to open the clipboard manager in dwm:
+
+1. Update `config.h` in your dwm directory:
+
+```c
+static const char *clipcmd[] = { "rofi", "-show", "clipboard", NULL };
+
+static const Key keys[] = {
+    /* modifier                     key        function        argument */
+    { MODKEY|ControlMask,           XK_w,      spawn,          {.v = clipcmd } },
+};
+```
+
+2. Recompile and install dwm:
+
+```bash
+sudo make clean install
 ```
 
 ## File Structure
@@ -82,7 +112,4 @@ rofi-clip
 
 - **No Images showing?** Make sure your Rofi theme supports icons (`-show-icons` is included by default).
 - **OpenRC log permission errors?** Run `sudo chown -R $USER:$USER ~/.local/share/rofi-clip-history` to ensure log ownership belongs to your user.
-- **History isn't updating?** Verify the daemon status:
-  - Systemd: `systemctl --user status clip-daemon`
-  - OpenRC: `sudo rc-service clip-daemon status`
-  - Manual: `pgrep clip-daemon`
+- **Keybinding doesn't trigger?** Try to specify the full path (`/usr/bin/rofi`) in dwm's `config.h` or i3 if `~/.local/bin` is not in dwm's or i3's `$PATH`.

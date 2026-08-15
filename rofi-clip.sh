@@ -1,32 +1,42 @@
 #!/usr/bin/env bash
 
 BASE_DIR="$HOME/.local/share/rofi-clip-history"
-CLIP_FILE="$BASE_DIR/clipboard_history"
+HIST_FILE="$BASE_DIR/clipboard_history"
+IMG_DIR="$BASE_DIR/images"
 
-[ ! -f "$CLIP_FILE" ] && touch "$CLIP_FILE"
+if [ -n "$1" ]; then
+    SELECTION="$1"
 
-# Display entries in Rofi with icon preview support
-SELECTED=$(rofi -dmenu -i -show-icons -p "Clipboard:" < <(awk '
-/^\[IMAGE\] / {
-    img = substr($0, 9)
-    printf "%s\0icon\x1f%s\n", $0, img
-    next
-}
-{ print }
-' "$CLIP_FILE"))
-
-if [ -n "$SELECTED" ]; then
-    if [[ "$SELECTED" == "[IMAGE]"* ]]; then
-        IMG_PATH="${SELECTED#\[IMAGE\] }"
+    # Check if selection is an image reference: [IMAGE: <hash>]
+    if [[ "$SELECTION" =~ ^\[IMAGE:\ ([a-f0-9]+)\] ]]; then
+        IMG_HASH="${BASH_REMATCH[1]}"
+        IMG_PATH="$IMG_DIR/$IMG_HASH.png"
 
         if [ -f "$IMG_PATH" ]; then
-            xclip -selection clipboard -t image/png -i "$IMG_PATH"
-            xclip -selection primary -t image/png -i "$IMG_PATH" 2>/dev/null || true
+            xclip -selection clipboard -target image/png -i "$IMG_PATH"
         fi
     else
-        DECODED=$(printf '%b' "$SELECTED")
-        printf '%s' "$DECODED" | xclip -selection clipboard
-        printf '%s' "$DECODED" | xclip -selection primary
+        # Standard text entry - write back to clipboard and primary selection
+        printf '%s' "$SELECTION" | xclip -selection clipboard
     fi
-    # clip-daemon.sh automatically detects the xclip change and reorders history
+    exit 0
+fi
+
+if [ -f "$HIST_FILE" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+
+        # Format image entries with Rofi icon metadata (\0icon\x1f<path>)
+        if [[ "$line" =~ ^\[IMAGE:\ ([a-f0-9]+)\] ]]; then
+            IMG_HASH="${BASH_REMATCH[1]}"
+            IMG_PATH="$IMG_DIR/$IMG_HASH.png"
+            if [ -f "$IMG_PATH" ]; then
+                printf "%s\0icon\x1f%s\n" "$line" "$IMG_PATH"
+                continue
+            fi
+        fi
+
+        # Output standard text line
+        printf "%s\n" "$line"
+    done < "$HIST_FILE"
 fi
