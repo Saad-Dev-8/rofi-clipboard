@@ -25,11 +25,32 @@ while clipnotify 2>/dev/null || sleep 1; do
 
             ENTRY="[IMAGE] $IMG_PATH"
 
-            TMP_FILE=$(mktemp)
-            {
-                printf '%s\n' "$ENTRY"
-                TARGET_ENTRY="$ENTRY" awk 'BEGIN{target=ENVIRON["TARGET_ENTRY"]} $0 != target' "$CLIP_FILE" 2>/dev/null || true
-            } | head -n "$MAX_ENTRIES" > "$TMP_FILE" && mv "$TMP_FILE" "$CLIP_FILE"
+            export ENTRY MAX_ENTRIES CLIP_FILE
+            perl -e '
+                use strict;
+                use warnings;
+
+                my $entry = $ENV{"ENTRY"};
+                my $file = $ENV{"CLIP_FILE"};
+                my $max = $ENV{"MAX_ENTRIES"} || 100;
+
+                my @lines = ();
+                if (-f $file) {
+                    open(my $fh, "<", $file);
+                    while (<$fh>) {
+                        chomp;
+                        push @lines, $_ if $_ ne $entry && $_ ne "";
+                    }
+                    close($fh);
+                }
+
+                unshift @lines, $entry;
+                splice @lines, $max if @lines > $max;
+
+                open(my $out, ">", $file);
+                print $out join("\n", @lines) . "\n";
+                close($out);
+            '
 
             # Trigger real-time orphaned image purge in background
             [ -x "$CLEAN_SCRIPT" ] && "$CLEAN_SCRIPT" &
@@ -41,13 +62,36 @@ while clipnotify 2>/dev/null || sleep 1; do
         if [ -n "$RAW_CLIP" ] && [ "$RAW_CLIP" != "$LAST_CLIP" ]; then
             LAST_CLIP="$RAW_CLIP"
 
-            SINGLE_LINE=$(printf '%s' "$RAW_CLIP" | sed ':a;N;$!ba;s/\\/\\\\/g; s/\n/\\n/g')
+            export RAW_CLIP MAX_ENTRIES CLIP_FILE
+            perl -e '
+                use strict;
+                use warnings;
 
-            TMP_FILE=$(mktemp)
-            {
-                printf '%s\n' "$SINGLE_LINE"
-                TARGET_ENTRY="$SINGLE_LINE" awk 'BEGIN{target=ENVIRON["TARGET_ENTRY"]} $0 != target' "$CLIP_FILE" 2>/dev/null || true
-            } | head -n "$MAX_ENTRIES" > "$TMP_FILE" && mv "$TMP_FILE" "$CLIP_FILE"
+                my $raw = $ENV{"RAW_CLIP"};
+                my $file = $ENV{"CLIP_FILE"};
+                my $max = $ENV{"MAX_ENTRIES"} || 100;
+
+                $raw =~ s/\\/\\\\/g;
+                $raw =~ s/\r/\\r/g;
+                $raw =~ s/\n/\\n/g;
+
+                my @lines = ();
+                if (-f $file) {
+                    open(my $fh, "<", $file);
+                    while (<$fh>) {
+                        chomp;
+                        push @lines, $_ if $_ ne $raw && $_ ne "";
+                    }
+                    close($fh);
+                }
+
+                unshift @lines, $raw;
+                splice @lines, $max if @lines > $max;
+
+                open(my $out, ">", $file);
+                print $out join("\n", @lines) . "\n";
+                close($out);
+            '
 
             # Trigger real-time orphaned image purge in background
             [ -x "$CLEAN_SCRIPT" ] && "$CLEAN_SCRIPT" &
