@@ -113,3 +113,13 @@ sudo make clean install
 - **No Images showing?** Make sure your Rofi theme supports icons (`-show-icons` is included by default).
 - **OpenRC log permission errors?** Run `sudo chown -R $USER:$USER ~/.local/share/rofi-clip-history` to ensure log ownership belongs to your user.
 - **Keybinding doesn't trigger?** Try to specify the full path (`/usr/bin/rofi`) in dwm's `config.h` or i3 if `~/.local/bin` is not in dwm's or i3's `$PATH`.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=Saad-Dev-8%2Frofi-clipboard&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Saad-Dev-8/rofi-clipboard&type=date&theme=dark&legend=top-left&sealed_token=u-WQEueqDO02uOKAar7rcQZ1q64BFM43eE4GmLmpNBbF1g60IwgwXltVrtj9lgCSCjdnMSKDnA8DB5PbeQ-xu6XGVdee36DwpjPrhz_SdQbCHEFIvH7bAg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Saad-Dev-8/rofi-clipboard&type=date&legend=top-left&sealed_token=u-WQEueqDO02uOKAar7rcQZ1q64BFM43eE4GmLmpNBbF1g60IwgwXltVrtj9lgCSCjdnMSKDnA8DB5PbeQ-xu6XGVdee36DwpjPrhz_SdQbCHEFIvH7bAg" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Saad-Dev-8/rofi-clipboard&type=date&legend=top-left&sealed_token=u-WQEueqDO02uOKAar7rcQZ1q64BFM43eE4GmLmpNBbF1g60IwgwXltVrtj9lgCSCjdnMSKDnA8DB5PbeQ-xu6XGVdee36DwpjPrhz_SdQbCHEFIvH7bAg" />
+ </picture>
+</a>
