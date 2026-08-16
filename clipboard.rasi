@@ -1,0 +1,120 @@
+* {
+    background: #2e3440;
+    foreground: #d8dee9;
+    bg-selected: #88c0d0;
+    grey: #4c566a;
+    bg-alt: #3b4252;
+    
+    spacing: 0;
+    margin: 0;
+    padding: 0;
+    font: "JetBrains Mono 11";
+}
+
+window {
+    background-color: @background;
+    border-radius: 8px;
+    padding: 16px;
+    width: 950px;
+    location: center;
+    anchor: center;
+    orientation: horizontal;
+    children: [ mainbox, preview-box ];
+}
+
+mainbox {
+    background-color: @background;
+    spacing: 12px;
+    padding: 0;
+    width: 55%;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @bg-alt;
+    border-radius: 6px;
+    padding: 8px 12px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    background-color: inherit;
+    text-color: @bg-selected;
+    font: "JetBrains Mono 13";
+    padding: 0 4px;
+    margin: 0 6px 0 0;
+    str: ""; 
+}
+
+entry {
+    background-color: inherit;
+    text-color: @foreground;
+    placeholder-color: @grey;
+    font: "JetBrains Mono 13";
+    expand: true;
+    vertical-align: 0.5;
+}
+
+listview {
+    background-color: @background;
+    spacing: 4px;
+    lines: 10;
+    scrollbar: true;
+    scrollbar-width: 4px;
+    border-radius: 6px;
+    padding: 2px 0px;
+}
+
+element {
+    background-color: @background;
+    text-color: @foreground;
+    padding: 6px 10px;
+    border-radius: 6px;
+    spacing: 10px;
+    /* Explicitly use native Rofi elements for perfect vertical baseline alignment */
+    children: [ element-text ];
+}
+
+element selected {
+    background-color: @bg-selected;
+    text-color: @background;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: inherit;
+    font: "JetBrains Mono 11";
+    markup: true;
+    vertical-align: 0.5;
+    horizontal-align: 0.0;
+}
+
+preview-box {
+    background-color: @bg-alt;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 0 0 0 14px;
+    width: 45%;
+    children: [ icon-current-entry ];
+}
+
+icon-current-entry {
+    background-color: transparent;
+    expand: true;
+    size: 320px;
+    horizontal-align: 0.5;
+    vertical-align: 0.5;
+}
+
+scrollbar {
+    background-color: @bg-alt;
+    width: 4px;
+    border-radius: 2px;
+}
+
+scrollbar handle {
+    background-color: @bg-selected;
+    width: 4px;
+    border-radius: 2px;
+    min-height: 20px;
+}

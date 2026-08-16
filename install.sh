@@ -6,6 +6,7 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 BASE_DIR="$HOME/.local/share/rofi-clip-history"
 IMG_DIR="$BASE_DIR/images"
+ROFI_DIR="$HOME/.config/rofi"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 
 INSTALL_SYSTEMD=false
@@ -33,7 +34,7 @@ for arg in "$@"; do
 done
 
 echo "Checking required dependencies..."
-for cmd in xclip clipnotify rofi awk sed sha1sum; do
+for cmd in xclip clipnotify rofi awk sed sha1sum perl; do
     if ! command -v "$cmd" &>/dev/null; then
         echo "Error: Required command '$cmd' is not installed." >&2
         exit 1
@@ -41,16 +42,17 @@ for cmd in xclip clipnotify rofi awk sed sha1sum; do
 done
 
 echo "Creating target directories..."
-mkdir -p "$BIN_DIR" "$IMG_DIR"
-[ ! -f "$BASE_DIR/clipboard_history" ] && touch "$BASE_DIR/clipboard_history"
+mkdir -p "$BIN_DIR" "$IMG_DIR" "$ROFI_DIR"
+[ ! -f "$BASE_DIR/clipboard_history.tsv" ] && touch "$BASE_DIR/clipboard_history.tsv"
 
-echo "Copying scripts to $BIN_DIR..."
+echo "Copying scripts and configuration..."
 cp -f "$SRC_DIR/clip-daemon.sh" "$BIN_DIR/clip-daemon"
 cp -f "$SRC_DIR/rofi-clip.sh" "$BIN_DIR/rofi-clip"
-cp -f "$SRC_DIR/clip-clean.sh" "$BIN_DIR/clip-clean"
+cp -f "$SRC_DIR/clip-clean.sh" "$BASE_DIR/clip-clean.sh"
+[ -f "$SRC_DIR/clipboard.rasi" ] && cp -f "$SRC_DIR/clipboard.rasi" "$ROFI_DIR/clipboard.rasi"
 
 echo "Setting execution permissions..."
-chmod +x "$BIN_DIR/clip-daemon" "$BIN_DIR/rofi-clip" "$BIN_DIR/clip-clean"
+chmod +x "$BIN_DIR/clip-daemon" "$BIN_DIR/rofi-clip" "$BASE_DIR/clip-clean.sh"
 
 if [ "$INSTALL_SYSTEMD" = true ]; then
     if ! command -v systemctl &>/dev/null; then

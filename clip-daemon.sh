@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 BASE_DIR="$HOME/.local/share/rofi-clip-history"
-CLIP_FILE="$BASE_DIR/clipboard_history"
+CLIP_FILE="$BASE_DIR/clipboard_history.tsv"
 IMG_DIR="$BASE_DIR/images"
 CLEAN_SCRIPT="$BASE_DIR/clip-clean.sh"
 MAX_ENTRIES=100
@@ -13,6 +13,7 @@ LAST_CLIP=""
 
 while clipnotify 2>/dev/null || sleep 1; do
     TARGETS=$(xclip -selection clipboard -t TARGETS -o 2>/dev/null)
+    TS=$(date +"%Y-%m-%d %H:%M:%S")
 
     if echo "$TARGETS" | grep -q "image/png"; then
         CHECKSUM=$(xclip -selection clipboard -t image/png -o 2>/dev/null | sha1sum | awk '{print $1}')
@@ -21,17 +22,20 @@ while clipnotify 2>/dev/null || sleep 1; do
             LAST_CLIP="$CHECKSUM"
             IMG_PATH="$IMG_DIR/$CHECKSUM.png"
 
-            [ ! -f "$IMG_PATH" ] && xclip -selection clipboard -t image/png -o > "$IMG_PATH" 2>/dev/null
+            if [ ! -f "$IMG_PATH" ]; then
+                xclip -selection clipboard -t image/png -o > "$IMG_PATH" 2>/dev/null
+            fi
 
-            ENTRY="[IMAGE] $IMG_PATH"
+            ENTRY="IMAGE	$TS	$IMG_PATH"
 
-            export ENTRY MAX_ENTRIES CLIP_FILE
+            export ENTRY MAX_ENTRIES CLIP_FILE IMG_PATH
             perl -e '
                 use strict;
                 use warnings;
 
                 my $entry = $ENV{"ENTRY"};
                 my $file = $ENV{"CLIP_FILE"};
+                my $img = $ENV{"IMG_PATH"};
                 my $max = $ENV{"MAX_ENTRIES"} || 100;
 
                 my @lines = ();
@@ -39,7 +43,8 @@ while clipnotify 2>/dev/null || sleep 1; do
                     open(my $fh, "<", $file);
                     while (<$fh>) {
                         chomp;
-                        push @lines, $_ if $_ ne $entry && $_ ne "";
+                        my @cols = split(/\t/, $_);
+                        push @lines, $_ if ($cols[2] // "") ne $img && $_ ne "";
                     }
                     close($fh);
                 }
@@ -52,7 +57,6 @@ while clipnotify 2>/dev/null || sleep 1; do
                 close($out);
             '
 
-            # Trigger real-time orphaned image purge in background
             [ -x "$CLEAN_SCRIPT" ] && "$CLEAN_SCRIPT" &
         fi
 
@@ -62,30 +66,48 @@ while clipnotify 2>/dev/null || sleep 1; do
         if [ -n "$RAW_CLIP" ] && [ "$RAW_CLIP" != "$LAST_CLIP" ]; then
             LAST_CLIP="$RAW_CLIP"
 
-            export RAW_CLIP MAX_ENTRIES CLIP_FILE
+            CLEAN_STR=$(echo "$RAW_CLIP" | tr -d '\r')
+            TYPE="TEXT"
+            if [[ "$CLEAN_STR" =~ ^https?:// ]]; then
+                TYPE="URL"
+            elif [[ "$CLEAN_STR" =~ ^(\$|#|\>|git|cd|ls|sudo|systemctl|chmod|mkdir|curl|wget|npm|cargo|docker)[[:space:]] ]]; then
+                TYPE="TERM"
+            elif [[ "$CLEAN_STR" =~ ^(/|~/|\./) ]]; then
+                TYPE="FILE"
+            elif [[ "$CLEAN_STR" =~ $'\n' ]]; then
+                TYPE="CODE"
+            fi
+
+            export RAW_CLIP MAX_ENTRIES CLIP_FILE TYPE TS
             perl -e '
                 use strict;
                 use warnings;
 
                 my $raw = $ENV{"RAW_CLIP"};
                 my $file = $ENV{"CLIP_FILE"};
+                my $type = $ENV{"TYPE"};
+                my $ts = $ENV{"TS"};
                 my $max = $ENV{"MAX_ENTRIES"} || 100;
 
-                $raw =~ s/\\/\\\\/g;
-                $raw =~ s/\r/\\r/g;
-                $raw =~ s/\n/\\n/g;
+                my $escaped_raw = $raw;
+                $escaped_raw =~ s/\\/\\\\/g;
+                $escaped_raw =~ s/\r/\\r/g;
+                $escaped_raw =~ s/\n/\\n/g;
+
+                my $entry = "$type\t$ts\t$escaped_raw";
 
                 my @lines = ();
                 if (-f $file) {
                     open(my $fh, "<", $file);
                     while (<$fh>) {
                         chomp;
-                        push @lines, $_ if $_ ne $raw && $_ ne "";
+                        my @cols = split(/\t/, $_);
+                        push @lines, $_ if ($cols[2] // "") ne $escaped_raw && $_ ne "";
                     }
                     close($fh);
                 }
 
-                unshift @lines, $raw;
+                unshift @lines, $entry;
                 splice @lines, $max if @lines > $max;
 
                 open(my $out, ">", $file);
@@ -93,7 +115,6 @@ while clipnotify 2>/dev/null || sleep 1; do
                 close($out);
             '
 
-            # Trigger real-time orphaned image purge in background
             [ -x "$CLEAN_SCRIPT" ] && "$CLEAN_SCRIPT" &
         fi
     fi
