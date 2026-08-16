@@ -78,8 +78,9 @@ configuration {
 
 Now you can open the clipboard directly via command line:
 ```bash
-rofi -show clipboard
+rofi -show clipboard -theme clipboard
 ```
+**Note:** The `-theme clipboard` is the theme for the clipboard to show preview and nerd icons properly.
 
 ## Window Manager Configuration (dwm)
 
