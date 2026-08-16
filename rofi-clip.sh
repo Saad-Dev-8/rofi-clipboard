@@ -3,12 +3,13 @@
 BASE_DIR="$HOME/.local/share/rofi-clip-history"
 HIST_FILE="$BASE_DIR/clipboard_history.tsv"
 
-# Pango Icons
+# Pango Styled Icons
 ICON_IMG='<span foreground="#88c0d0">󰋩</span>'
 ICON_URL='<span foreground="#ebcb8b">󰌷</span>'
 ICON_TERM='<span foreground="#b48ead">󰞷</span>'
-ICON_FILE='<span foreground="#81a1c1">󰉋</span>'
-ICON_CODE='<span foreground="#a3be8c">󰅨</span>'
+ICON_FOLDER='<span foreground="#81a1c1">󰉋</span>'
+ICON_FILE='<span foreground="#a3be8c">󰈔</span>'
+ICON_CODE='<span foreground="#e5c07b">󰅨</span>'
 ICON_TEXT='<span foreground="#d8dee9">󰈙</span>'
 
 if [ -n "$1" ]; then
@@ -34,6 +35,7 @@ if [ -f "$HIST_FILE" ]; then
         -v icon_img="$ICON_IMG" \
         -v icon_url="$ICON_URL" \
         -v icon_term="$ICON_TERM" \
+        -v icon_folder="$ICON_FOLDER" \
         -v icon_file="$ICON_FILE" \
         -v icon_code="$ICON_CODE" \
         -v icon_text="$ICON_TEXT" '
@@ -64,6 +66,8 @@ if [ -f "$HIST_FILE" ]; then
                 print icon_url "  " esc_content
             } else if (type == "TERM") {
                 print icon_term "  " esc_content
+            } else if (type == "FOLDER") {
+                print icon_folder "  " esc_content
             } else if (type == "FILE") {
                 print icon_file "  " esc_content
             } else if (type == "CODE") {

@@ -67,15 +67,33 @@ while clipnotify 2>/dev/null || sleep 1; do
             LAST_CLIP="$RAW_CLIP"
 
             CLEAN_STR=$(echo "$RAW_CLIP" | tr -d '\r')
+            # Strip single trailing newline to prevent false multi-line code flags on terminal copies
+            STRIPPED_STR="${CLEAN_STR%$'\n'}"
+
             TYPE="TEXT"
-            if [[ "$CLEAN_STR" =~ ^https?:// ]]; then
-                TYPE="URL"
-            elif [[ "$CLEAN_STR" =~ ^(\$|#|\>|git|cd|ls|sudo|systemctl|chmod|mkdir|curl|wget|npm|cargo|docker)[[:space:]] ]]; then
-                TYPE="TERM"
-            elif [[ "$CLEAN_STR" =~ ^(/|~/|\./) ]]; then
-                TYPE="FILE"
-            elif [[ "$CLEAN_STR" =~ $'\n' ]]; then
+            if [[ "$STRIPPED_STR" =~ $'\n' ]]; then
                 TYPE="CODE"
+            elif [[ "$CLEAN_STR" =~ ^(https?|ftp|file):// ]]; then
+                TYPE="URL"
+            else
+                # Expand ~ to $HOME for local filesystem checks
+                EXP_PATH="${CLEAN_STR/#\~/$HOME}"
+
+                if [ -d "$EXP_PATH" ]; then
+                    TYPE="FOLDER"
+                elif [ -f "$EXP_PATH" ]; then
+                    TYPE="FILE"
+                elif [[ "$CLEAN_STR" =~ ^(\$|#|\>|git|cd|ls|sudo|systemctl|chmod|mkdir|curl|wget|npm|cargo|docker|cat|grep|find|sed|awk)[[:space:]] ]]; then
+                    TYPE="TERM"
+                elif [[ "$CLEAN_STR" =~ ^(/|~/|\./) ]]; then
+                    if [[ "$CLEAN_STR" =~ /$ ]]; then
+                        TYPE="FOLDER"
+                    else
+                        TYPE="FILE"
+                    fi
+                else
+                    TYPE="TEXT"
+                fi
             fi
 
             export RAW_CLIP MAX_ENTRIES CLIP_FILE TYPE TS
